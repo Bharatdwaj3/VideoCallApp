@@ -28,3 +28,38 @@ navigator.mediaDevices,getUserMedia({
     })
     peerConnections[call.peer]=call;
 })
+peer.on('open',(id)=>{
+    myId=id;
+    socket.emit("newUser",id,roomID);
+})
+peer.on('error',(err)=>{
+    alert(err.type);
+});
+socket.on('userJoint',id=>{
+    console.log("new user joined")
+    const call = peer.call(id, myVideoStream);
+    const vid = document.createElement('video');
+    call.on('error',(err)=>{
+        alert(err);
+    })
+    call.on('stream',userStream=>{
+        addVideo(vid, userStream);
+    })
+    call.on('close',()=>{
+        vid.remove();
+        console.log("user disconnect")
+    })
+    peerConnections[id]=call;
+})
+socket.on('userDisconnect',id=>{
+    if(peerConnections[id]){
+        peerConnections[id].close();
+    }
+})
+function addVideo(video, stream){
+    video.srcObject=stream;
+    video.addEventListener('loadedmetadata',()=>{
+        video.play()
+    })
+    videoGrid.append(video);
+}
